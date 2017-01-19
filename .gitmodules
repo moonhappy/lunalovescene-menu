@@ -1,0 +1,3 @@
+[submodule "lib/lunalovescene"]
+	path = lib/lunalovescene
+	url = https://github.com/moonhappy/lunalovescene.git

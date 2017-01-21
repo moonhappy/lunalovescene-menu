@@ -6,20 +6,19 @@ local Lna = require "lib.lunalovescene.llscn"
   window.
 ]]
 
-local LnaMenuButton = class("LnaMenuButton", Lna.Actor)
-function LnaMenuButton:initialize(menuIdentifier)
+local LnaMenuButton = Class("LnaMenuButton", Lna.Actor)
+function LnaMenuButton:initialize(label, size, color, cornerRadius)
   Lna.Actor.initialize(self)
   self.menuIdentifier = menuIdentifier
-  self.dims = { x=-401, y=-101, w=400, h=100 }
-  self.color = { r=255, g=100, b=100, a=255 }
-end
-
-function LnaMenuButton:update(dt)
+  local rad = cornerRadius or 0
+  self.dims = { x=-size.w, y=-size.h, w=size.w, h=size.h, r=rad }
+  self.color = color
+  self.label = label
 end
 
 function LnaMenuButton:draw()
   love.graphics.setColor(self.color.r, self.color.g, self.color.b, self.color.a)
-  love.graphics.rectangle("fill", self.dims.x, self.dims.y, self.dims.w, self.dims.h)
+  love.graphics.rectangle("fill", self.dims.x, self.dims.y, self.dims.w, self.dims.h, self.dims.r, self.dims.r)
 end
 
 
@@ -27,46 +26,97 @@ end
   Menu window, groups menu elements as a singular view.
 ]]
 
-local LnaMenuWindow = class("LnaMenuWindow", Lna.Actor)
-function LnaMenuWindow:initialize()
-  Lna.Actor.initialize(self)
-  self.dims = { x=-401, y=-101, w=400, h=100 }
-  self.color = { r=100, g=20, b=20, a=255 }
-  self.menuItems = {}
+local LnaMenuWindow = Class("LnaMenuWindow", Lna.Director)
+function LnaMenuWindow:initialize(verticalSpacer, horizontalSpacer, color, cornerRadius)
+  Lna.Director.initialize(self)
+  local rad = cornerRadius or 0
+  self.dims = { x=-verticalSpacer, y=-horizontalSpacer, w=verticalSpacer, h=horizontalSpacer, r=rad }
+  self.color = color
+  self._active = false
+  self._visible = false
+  self._ready = false
+  self._spacers = {v=verticalSpacer, h=horizontalSpacer}
 end
 
 function LnaMenuWindow:addMenuItem(item)
-  self.menuItems[#self.menuItems + 1] = item
-  item.id = #self.menuItems
-  item.scene = self.scene
-  return #self.menuItems
+  self:addMenuItems({item})
 end
 
-function LnaMenuWindow:_doHandleCue(cueName)
-  LnaActor:_doHandleCue(self, cueName)
-  for i,v in pairs(self.menuItems) do
-    v:_doHandleCue(cueName)
+function LnaMenuWindow:addMenuItems(items)
+  if next(items) then
+    local icount = #items
+    for i=1,icount do
+      items[i]:setVisible(self._visible)
+      items[i]:setActive(self._active)
+      self:addActor(items[i])
+    end
+    self._ready = false
   end
 end
 
-function LnaMenuWindow:signalCue(cueName, signalTo)
-  reciever = signalTo or self.scene
-  reciever:_doHandleCue(cueName)
+function LnaMenuWindow:setActive(active)
+  Lna.Director.setActive(self, active)
+  if next(self.actors) then
+    local count = #self.actors
+    for i=1,count do
+      self.actors[i]:setActive(active)
+    end
+  end
 end
 
-function LnaMenuWindow:_setAsCurrent()
-  for i,v in pairs(self.actors) do
-    v.id = i
-    v.scene = self.scene
+function LnaMenuWindow:setVisible(visible)
+  Lna.Director.setVisible(self, visible)
+  if next(self.actors) then
+    local count = #self.actors
+    for i=1,count do
+      self.actors[i]:setVisible(visible)
+    end
   end
+end
+
+function LnaMenuWindow:configDimensions()
+  local width, height, flags = love.window.getMode()
+  local wndWidth = 0
+  local wndHeight = self._spacers.h
+  -- Determine window coordinates, first pass
+  if next(self.actors) then
+    local count = #self.actors
+    for i=1,count do
+      wndHeight = wndHeight + self.actors[i].dims.h + self._spacers.h
+      if wndWidth < self.actors[i].dims.w then
+        wndWidth = self.actors[i].dims.w
+      end
+    end
+  end
+  self.dims.w = wndWidth + (self._spacers.v * 2)
+  self.dims.h = wndHeight
+  self.dims.x = (width / 2) - (self.dims.w / 2)
+  self.dims.y = (height / 2) - (self.dims.h / 2)
+  -- Set XY position for menu items following window coordinates, second pass
+  if next(self.actors) then
+    local count = #self.actors
+    local itemXpos = self.dims.x + self._spacers.v
+    local itemYpos = self.dims.y
+    for i=1,count do
+      itemYpos = itemYpos + self._spacers.h
+      self.actors[i].dims.x = itemXpos
+      self.actors[i].dims.y = itemYpos
+    end
+  end
+  self._ready = true
 end
 
 function LnaMenuWindow:update(dt)
+  if not self._ready then
+    self:configDimensions()
+  end
 end
 
 function LnaMenuWindow:draw()
-  love.graphics.setColor(self.color.r, self.color.g, self.color.b, self.color.a)
-  love.graphics.rectangle("fill", self.dims.x, self.dims.y, self.dims.w, self.dims.h)
+  if self._ready then
+    love.graphics.setColor(self.color.r, self.color.g, self.color.b, self.color.a)
+    love.graphics.rectangle("fill", self.dims.x, self.dims.y, self.dims.w, self.dims.h, self.dims.r, self.dims.r)
+  end
 end
 
 
@@ -74,58 +124,29 @@ end
   Menu manages a menu prompt.
 ]]
 
-local LnaMenu = class("LnaMenu", Lna.Actor)
+local LnaMenu = Class("LnaMenu", Lna.Director)
 function LnaMenu:initialize()
-  Lna.Actor.initialize(self)
-  self.menuWindows = {}
-  self.currentWindowIdx = -1
-  self.isLoaded = false
-  self:onCue("llscn-scene-changed", "sceneChanged")
+  Lna.Director.initialize(self)
+  self._currentWindowIndex = -1
 end
 
-function LnaMenu:sceneChanged()
-  if self.menuWindows[self.currentWindowIdx] then
-    self.menuWindows[self.currentWindowIdx].scene = self.scene
-    self.menuWindows[self.currentWindowIdx]:_setAsCurrent()
+function LnaMenu:addMenuWindow(window)
+  window:setActive(false)
+  window:setVisible(false)
+  return self:addActor(window)
+end
+
+function LnaMenu:setCurrentWindow(windowIndex)
+  self:_setWindowState(self._currentWindowIndex, false)
+  self._currentWindowIndex = windowIndex
+  self:_setWindowState(self._currentWindowIndex, true)
+end
+
+function LnaMenu:_setWindowState(idx, state)
+  if next(self.actors) and idx ~= -1 then
+    self.actors[idx]:setActive(state)
+    self.actors[idx]:setVisible(state)
   end
 end
 
-function LnaMenu:addMenuWindow(wnd)
-  self.menuWindows[#self.menuWindows + 1] = wnd
-  wnd.id = #self.menuWindows
-  wnd.scene = self.scene
-  return #self.menuWindows
-end
-
-function LnaMenu:setCurrentMenuWindow(wndIdx)
-  self.currentWindowIdx = wndIdx
-  if self.isLoaded then
-    self.menuWindows[wndIdx]:load()
-  end
-  self.menuWindows[wndIdx]:_setAsCurrent()
-end
-
-function LnaMenu:load()
-  if self.menuWindows[self.currentWindowIdx] then
-    self.menuWindows[self.currentWindowIdx]:load()
-  end
-  self.isLoaded = true
-end
-
-function LnaMenu:signalCue(eventName)
-  if self.menuWindows[self.currentWindowIdx] then
-    self.menuWindows[self.currentWindowIdx]:_doHandleCue(eventName)
-  end
-end
-
-function LnaMenu:update(dt)
-  if self.menuWindows[self.currentWindowIdx] then
-    self.menuWindows[self.currentWindowIdx]:update(dt)
-  end
-end
-
-function LnaMenu:draw()
-  if self.menuWindows[self.currentWindowIdx] then
-    self.menuWindows[self.currentWindowIdx]:draw()
-  end
-end
+return {Button=LnaMenuButton, Window=LnaMenuWindow, Menu=LnaMenu}

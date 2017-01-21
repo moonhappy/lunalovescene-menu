@@ -1,3 +1,6 @@
 [submodule "lib/lunalovescene"]
 	path = lib/lunalovescene
 	url = https://github.com/moonhappy/lunalovescene.git
+[submodule "lib/middleclass"]
+	path = lib/middleclass
+	url = https://github.com/kikito/middleclass.git

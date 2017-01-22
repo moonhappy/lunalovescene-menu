@@ -12,18 +12,23 @@ Lna.Menu = require "llscn-menu"
 ]]
 
 -- Construct the scene
-local scene = Lna.Scene:new()
-local menuBtn = Lna.Menu.Button:new("Yo", {w=200,h=50}, {r=200,g=200,b=100,a=255}, 10)
-local menuWnd = Lna.Menu.Window:new(10, 10, {r=150,g=150,b=160,a=255})
-menuWnd:addMenuItem(menuBtn)
+local f = love.graphics.setNewFont(18)
+local bc = {r=100,g=100,b=100,a=255}
+local lsC = {r=255,g=255,b=100,a=255}
+local luC = {r=255,g=255,b=255,a=255}
+local menuBtn1 = Lna.Menu.Button:new({text="Yo",ucolor=luC,scolor=lsC,font=f}, {w=300,h=50}, bc, 10)
+local menuBtn2 = Lna.Menu.Button:new({text="Exit",ucolor=luC,scolor=lsC,font=f}, {w=300,h=50}, bc, 10)
+local menuWnd = Lna.Menu.Window:new(10, 10, {r=20,g=20,b=20,a=255})
+menuWnd:addMenuItem(menuBtn1)
+menuWnd:addMenuItem(menuBtn2)
 local menu = Lna.Menu.Menu:new()
-local wndIdx = menu:addMenuWindow(menuWnd)
-menu:setCurrentWindow(wndIdx)
+menu:setCurrentWindow(menu:addMenuWindow(menuWnd))
 
+local scene = Lna.Scene:new()
 local menuWndIdx = scene:addActor(menuWnd)
-local menuBtnIdx = scene:addActor(menuBtn)
+local menuBtn1Idx = scene:addActor(menuBtn1)
+local menuBtn2Idx = scene:addActor(menuBtn2)
 local menuIdx = scene:addActor(menu)
-
 local stage = Lna.Stage:new()
 stage:setCurrentScene(stage:addScene(scene))
 
@@ -31,6 +36,7 @@ stage:setCurrentScene(stage:addScene(scene))
 -- Love2D calls
 function love.load()
   stage:load()
+  love.graphics.setBackgroundColor(200, 100, 100, 255)
 end
 
 function love.update(dt)

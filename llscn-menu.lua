@@ -11,14 +11,45 @@ function LnaMenuButton:initialize(label, size, color, cornerRadius)
   Lna.Actor.initialize(self)
   self.menuIdentifier = menuIdentifier
   local rad = cornerRadius or 0
-  self.dims = { x=-size.w, y=-size.h, w=size.w, h=size.h, r=rad }
+  self.dims = {x=-size.w, y=-size.h, w=size.w, h=size.h, r=rad}
   self.color = color
   self.label = label
+  self.label.x = -1
+  self.label.y = -1
+  self.label.w = -1
+end
+
+function LnaMenuButton:update(dt)
+  if self.label.x == -1 then
+    local lw, lh, lx
+    local f = self.label.font
+    local tw = f:getWidth(self.label.text)
+    local th = f:getHeight(self.label.text)
+    if self.dims.w < tw then
+      lw = tw
+    else
+      lw = self.dims.w
+    end
+    if self.dims.h < th then
+      lh = th
+    else
+      lh = self.dims.h
+    end
+    self.label.x = self.dims.x
+    self.label.y = self.dims.y + (self.dims.h / 2) - (lh / 4)
+    self.label.w = lw
+  end
 end
 
 function LnaMenuButton:draw()
-  love.graphics.setColor(self.color.r, self.color.g, self.color.b, self.color.a)
+  local bc = self.color
+  love.graphics.setColor(bc.r, bc.g, bc.b, bc.a)
   love.graphics.rectangle("fill", self.dims.x, self.dims.y, self.dims.w, self.dims.h, self.dims.r, self.dims.r)
+  if self.label.x ~= -1 then
+    local lc = self.label.ucolor
+    love.graphics.setColor(lc.r, lc.g, lc.b, lc.b)
+    love.graphics.printf(self.label.text, self.label.x, self.label.y, self.label.w, "center")
+  end
 end
 
 
@@ -97,8 +128,10 @@ function LnaMenuWindow:configDimensions()
     local count = #self.actors
     local itemXpos = self.dims.x + self._spacers.v
     local itemYpos = self.dims.y
+    local lastItemHeight = 0
     for i=1,count do
-      itemYpos = itemYpos + self._spacers.h
+      itemYpos = itemYpos + lastItemHeight + self._spacers.h
+      lastItemHeight = self.actors[i].dims.h
       self.actors[i].dims.x = itemXpos
       self.actors[i].dims.y = itemYpos
     end

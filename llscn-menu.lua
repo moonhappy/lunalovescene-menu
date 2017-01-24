@@ -8,7 +8,7 @@ local Lna = require "lib.lunalovescene.llscn"
 
 local LnaMenuButton = Class("LnaMenuButton", Lna.Actor)
 function LnaMenuButton:initialize(label, size, color, cornerRadius)
-  Lna.Actor.initialize(self)
+  Lna.Actor.initialize(self, 5001)
   self.menuIdentifier = menuIdentifier
   local rad = cornerRadius or 0
   self.dims = {x=-size.w, y=-size.h, w=size.w, h=size.h, r=rad}
@@ -59,7 +59,7 @@ end
 
 local LnaMenuWindow = Class("LnaMenuWindow", Lna.Director)
 function LnaMenuWindow:initialize(verticalSpacer, horizontalSpacer, color, cornerRadius)
-  Lna.Director.initialize(self)
+  Lna.Director.initialize(self, 5000)
   local rad = cornerRadius or 0
   self.dims = { x=-verticalSpacer, y=-horizontalSpacer, w=verticalSpacer, h=horizontalSpacer, r=rad }
   self.color = color
@@ -182,4 +182,4 @@ function LnaMenu:_setWindowState(idx, state)
   end
 end
 
-return {Button=LnaMenuButton, Window=LnaMenuWindow, Menu=LnaMenu}
+return {Button=LnaMenuButton, Window=LnaMenuWindow, Director=LnaMenu, DRAWLAYER=5000}

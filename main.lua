@@ -16,19 +16,22 @@ local f = love.graphics.setNewFont(18)
 local bc = {r=100,g=100,b=100,a=255}
 local lsC = {r=255,g=255,b=100,a=255}
 local luC = {r=255,g=255,b=255,a=255}
+
+local menu = Lna.Menu.Director:new()
 local menuBtn1 = Lna.Menu.Button:new({text="Yo",ucolor=luC,scolor=lsC,font=f}, {w=300,h=50}, bc, 10)
 local menuBtn2 = Lna.Menu.Button:new({text="Exit",ucolor=luC,scolor=lsC,font=f}, {w=300,h=50}, bc, 10)
+
 local menuWnd = Lna.Menu.Window:new(10, 10, {r=20,g=20,b=20,a=255})
 menuWnd:addMenuItem(menuBtn1)
 menuWnd:addMenuItem(menuBtn2)
-local menu = Lna.Menu.Menu:new()
 menu:setCurrentWindow(menu:addMenuWindow(menuWnd))
 
 local scene = Lna.Scene:new()
-local menuWndIdx = scene:addActor(menuWnd)
-local menuBtn1Idx = scene:addActor(menuBtn1)
-local menuBtn2Idx = scene:addActor(menuBtn2)
-local menuIdx = scene:addActor(menu)
+scene:addActor(menuBtn1)
+scene:addActor(menuBtn2)
+scene:addActor(menuWnd)
+scene:addActor(menu)
+
 local stage = Lna.Stage:new()
 stage:setCurrentScene(stage:addScene(scene))
 

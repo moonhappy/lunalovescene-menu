@@ -26,7 +26,11 @@ function OuchButton:initialize()
   self:onCue("hit", "ouch")
 end
 function OuchButton:ouch()
-  self.label.text = "Ouch"
+  if self.label.text ~= "Ouch" then
+    self.label.text = "Ouch"
+  else
+    self:signalCue("menuChangeWindow", 2)
+  end
 end
 local menuBtn1 = OuchButton:new()
 
@@ -40,17 +44,44 @@ function ExitButton:exitOut()
 end
 local menuBtn2 = ExitButton:new()
 
+local menuBtn3 = Lna.Menu.Button:new({text="Boo",ucolor=luC,scolor=lsC,font=f}, {w=300,h=50}, bc, sc, 10)
+
 local menuWnd = Lna.Menu.Window:new(10, 10, {r=20,g=20,b=20,a=255})
 menuWnd:addMenuItem(menuBtn1)
+menuWnd:addMenuItem(menuBtn3)
 menuWnd:addMenuItem(menuBtn2)
-menu:setCurrentWindow(menu:addMenuWindow(menuWnd))
-menu:setActive(true)
+
+
+-- sub menu window
+
+local BackButton = Class("BackButton", Lna.Menu.Button)
+function BackButton:initialize()
+  Lna.Menu.Button.initialize(self, {text="Go Back",ucolor=luC,scolor=lsC,font=f}, {w=300,h=50}, bc, sc, 10)
+  self:onCue("hit", "back")
+end
+function BackButton:back()
+  self:signalCue("menuChangeWindow", 1)
+end
+local menuBtnBack = BackButton:new()
+
+local menuWnd2 = Lna.Menu.Window:new(10, 10, {r=20,g=20,b=20,a=255})
+menuWnd2:addMenuItem(menuBtnBack)
+
+
+-- Put it all together
 
 local scene = Lna.Scene:new()
 scene:addActor(menuBtn1)
 scene:addActor(menuBtn2)
+scene:addActor(menuBtn3)
 scene:addActor(menuWnd)
+scene:addActor(menuBtnBack)
+scene:addActor(menuWnd2)
 scene:addActor(menu)
+local wnd1 = menu:addMenuWindow(menuWnd)
+local wnd2 = menu:addMenuWindow(menuWnd2)
+menu:setCurrentWindow(wnd1)
+menu:setActive(true)
 
 local stage = Lna.Stage:new()
 stage:setCurrentScene(stage:addScene(scene))
@@ -66,7 +97,7 @@ function love.update(dt)
   stage:update(dt)
 end
 
-function love.keypressed(key)
+function love.keyreleased(key, scancode)
   stage:signalCue(key)
 end
 

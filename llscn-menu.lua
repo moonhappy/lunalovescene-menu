@@ -25,7 +25,7 @@ end
 
 function LnaMenuButton:_mouseOver(dt, mx, my)
   if self.director ~= nil and self._active then
-    self.director:_selectMenuItem(self)
+    self.director:_selectMenuItemObj(self)
     return true
   else
     return false
@@ -83,12 +83,13 @@ function LnaMenuButton:draw()
   love.graphics.rectangle("fill", dims.x, dims.y, dims.w, dims.h, dims.r, dims.r)
   if self.isSelected then
     love.graphics.setColor(sc.r, sc.g, sc.b, sc.a)
-    love.graphics.rectangle("line", dims.x, dims.y, dims.w, dims.h, dims.r)
   end
-  if self.label.x ~= -1 then
-    local lc = self.label.ucolor
+  love.graphics.rectangle("line", dims.x, dims.y, dims.w, dims.h, dims.r)
+  local label = self.label
+  if label.x ~= -1 then
+    local lc = label.ucolor
     love.graphics.setColor(lc.r, lc.g, lc.b, lc.b)
-    love.graphics.printf(self.label.text, self.label.x, self.label.y, self.label.w, "center")
+    love.graphics.printf(label.text, label.x, label.y, label.w, "center")
   end
 end
 
@@ -103,7 +104,8 @@ function LnaMenuWindow:initialize(verticalSpacer, horizontalSpacer, color, corne
   local rad = cornerRadius or 0
   self.dims = { x=-verticalSpacer, y=-horizontalSpacer, w=verticalSpacer, h=horizontalSpacer, r=rad }
   self.color = color
-  self.selectedMenuItem = nil
+  self.selectedMenuIdx = -1
+  self.menu = nil
   self._active = false
   self._visible = false
   self._ready = false
@@ -126,13 +128,23 @@ function LnaMenuWindow:addMenuItems(items)
   end
 end
 
-function LnaMenuWindow:_selectMenuItem(item)
-  if self.selectedMenuItem ~= nil then
-    self.selectedMenuItem:_unselectMenuItem()
+function LnaMenuWindow:_selectMenuItem(itemIdx)
+  if self.actors[self.selectedMenuIdx] ~= nil then
+    self.actors[self.selectedMenuIdx]:_unselectMenuItem()
   end
-  self.selectedMenuItem = item
-  if item ~= nil then
-    item:_selectMenuItem()
+  if self.actors[itemIdx] ~= nil then
+    self.selectedMenuIdx = itemIdx
+    self.actors[itemIdx]:_selectMenuItem()
+  end
+end
+
+function LnaMenuWindow:_selectMenuItemObj(item)
+  local count = #self.actors
+  for i=1,count do
+    if item == self.actors[i] then
+      self:_selectMenuItem(i)
+      break
+    end
   end
 end
 
@@ -213,11 +225,63 @@ function LnaMenu:initialize()
   Lna.Director.initialize(self)
   self._currentWindowIndex = -1
   self:setActive(false)
+  self:onCue("up", "_selectUp")
+  self:onCue("down", "_selectDown")
+  self:onCue("return", "_hit")
+  self:onCue("menuChangeWindow", "_changeWindow")
+end
+
+function LnaMenu:_selectUp()
+  if not self._active or self.actors[self._currentWindowIndex] == nil then
+    return
+  end
+  local nextItem = self.actors[self._currentWindowIndex].selectedMenuIdx - 1
+  if nextItem < 1 then
+    nextItem = 1
+  elseif nextItem > #self.actors[self._currentWindowIndex].actors then
+    nextItem = #self.actors[self._currentWindowIndex].actors
+  end
+  self.actors[self._currentWindowIndex]:_selectMenuItem(nextItem)
+end
+
+function LnaMenu:_selectDown()
+  if not self._active or self.actors[self._currentWindowIndex] == nil then
+    return
+  end
+  local nextItem = self.actors[self._currentWindowIndex].selectedMenuIdx + 1
+  if nextItem < 1 then
+    nextItem = 1
+  elseif nextItem > #self.actors[self._currentWindowIndex].actors then
+    nextItem = #self.actors[self._currentWindowIndex].actors
+  end
+  self.actors[self._currentWindowIndex]:_selectMenuItem(nextItem)
+end
+
+function LnaMenu:_hit()
+  if not self._active or self.actors[self._currentWindowIndex] == nil then
+    return
+  end
+  if self.actors[self._currentWindowIndex].selectedMenuIdx > 0 and self.actors[self._currentWindowIndex].selectedMenuIdx <= #self.actors[self._currentWindowIndex].actors then
+    local item = self.actors[self._currentWindowIndex].actors[self.actors[self._currentWindowIndex].selectedMenuIdx]
+    if item.director ~= nil and item._active then
+      for _,v in pairs(item.cues) do
+        if v.cue == "hit" then
+          v.obj[v.cb](v.obj)
+        end
+      end
+    end
+  end
+end
+
+function LnaMenu:_changeWindow(windowIdx)
+  self:setCurrentWindow(windowIdx)
 end
 
 function LnaMenu:addMenuWindow(window)
   window:setActive(false)
   window:setVisible(false)
+  window.menu = self
+  window._ready = false
   return self:addActor(window)
 end
 
@@ -229,13 +293,14 @@ end
 function LnaMenu:setCurrentWindow(windowIndex)
   self:_setWindowState(self._currentWindowIndex, false)
   self._currentWindowIndex = windowIndex
-  self:_setWindowState(self._currentWindowIndex, self.active)
+  self:_setWindowState(self._currentWindowIndex, self._active)
 end
 
 function LnaMenu:_setWindowState(idx, state)
   if next(self.actors) and idx ~= -1 then
     self.actors[idx]:setActive(state)
     self.actors[idx]:setVisible(state)
+    self.actors[idx]._ready = false
   end
 end
 

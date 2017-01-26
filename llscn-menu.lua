@@ -20,11 +20,25 @@ function LnaMenuButton:initialize(label, size, color, selectedColor, cornerRadiu
   self.label.y = -1
   self.label.w = -1
   self:onMouseOver(self.dims, "_mouseOver")
+  self:onMouseCue(self.dims, "_mouseClick")
 end
 
 function LnaMenuButton:_mouseOver(dt, mx, my)
   if self.director ~= nil and self._active then
     self.director:_selectMenuItem(self)
+    return true
+  else
+    return false
+  end
+end
+
+function LnaMenuButton:_mouseClick(button, x, y, touch)
+  if self.director ~= nil and self._active and self.isSelected then
+    for _,v in pairs(self.cues) do
+      if v.cue == "hit" then
+        v.obj[v.cb](v.obj)
+      end
+    end
     return true
   else
     return false

@@ -19,8 +19,26 @@ local lsC = {r=255,g=255,b=100,a=255}
 local luC = {r=255,g=255,b=255,a=255}
 
 local menu = Lna.Menu.Director:new()
-local menuBtn1 = Lna.Menu.Button:new({text="Yo",ucolor=luC,scolor=lsC,font=f}, {w=300,h=50}, bc, sc, 10)
-local menuBtn2 = Lna.Menu.Button:new({text="Exit",ucolor=luC,scolor=lsC,font=f}, {w=300,h=50}, bc, sc, 10)
+
+local OuchButton = Class("OuchButton", Lna.Menu.Button)
+function OuchButton:initialize()
+  Lna.Menu.Button.initialize(self, {text="Button 1",ucolor=luC,scolor=lsC,font=f}, {w=300,h=50}, bc, sc, 10)
+  self:onCue("hit", "ouch")
+end
+function OuchButton:ouch()
+  self.label.text = "Ouch"
+end
+local menuBtn1 = OuchButton:new()
+
+local ExitButton = Class("ExitButton", Lna.Menu.Button)
+function ExitButton:initialize()
+  Lna.Menu.Button.initialize(self, {text="Exit",ucolor=luC,scolor=lsC,font=f}, {w=300,h=50}, bc, sc, 10)
+  self:onCue("hit", "exitOut")
+end
+function ExitButton:exitOut()
+  love.event.quit(0)
+end
+local menuBtn2 = ExitButton:new()
 
 local menuWnd = Lna.Menu.Window:new(10, 10, {r=20,g=20,b=20,a=255})
 menuWnd:addMenuItem(menuBtn1)
@@ -50,6 +68,10 @@ end
 
 function love.keypressed(key)
   stage:signalCue(key)
+end
+
+function love.mousepressed(x, y, button, isTouch)
+  stage:signalMouseCue(button, x, y, isTouch)
 end
 
 function love.draw()

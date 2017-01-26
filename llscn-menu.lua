@@ -7,16 +7,36 @@ local Lna = require "lib.lunalovescene.llscn"
 ]]
 
 local LnaMenuButton = Class("LnaMenuButton", Lna.Actor)
-function LnaMenuButton:initialize(label, size, color, cornerRadius)
+function LnaMenuButton:initialize(label, size, color, selectedColor, cornerRadius)
   Lna.Actor.initialize(self, 5001)
   self.menuIdentifier = menuIdentifier
   local rad = cornerRadius or 0
   self.dims = {x=-size.w, y=-size.h, w=size.w, h=size.h, r=rad}
   self.color = color
+  self.selectedColor = selectedColor
   self.label = label
+  self.isSelected = false
   self.label.x = -1
   self.label.y = -1
   self.label.w = -1
+  self:onMouseOver(self.dims, "_mouseOver")
+end
+
+function LnaMenuButton:_mouseOver(dt, mx, my)
+  if self.director ~= nil and self._active then
+    self.director:_selectMenuItem(self)
+    return true
+  else
+    return false
+  end
+end
+
+function LnaMenuButton:_selectMenuItem()
+  self.isSelected = true
+end
+
+function LnaMenuButton:_unselectMenuItem()
+  self.isSelected = false
 end
 
 function LnaMenuButton:update(dt)
@@ -43,8 +63,14 @@ end
 
 function LnaMenuButton:draw()
   local bc = self.color
+  local sc = self.selectedColor
+  local dims = self.dims
   love.graphics.setColor(bc.r, bc.g, bc.b, bc.a)
-  love.graphics.rectangle("fill", self.dims.x, self.dims.y, self.dims.w, self.dims.h, self.dims.r, self.dims.r)
+  love.graphics.rectangle("fill", dims.x, dims.y, dims.w, dims.h, dims.r, dims.r)
+  if self.isSelected then
+    love.graphics.setColor(sc.r, sc.g, sc.b, sc.a)
+    love.graphics.rectangle("line", dims.x, dims.y, dims.w, dims.h, dims.r)
+  end
   if self.label.x ~= -1 then
     local lc = self.label.ucolor
     love.graphics.setColor(lc.r, lc.g, lc.b, lc.b)
@@ -63,6 +89,7 @@ function LnaMenuWindow:initialize(verticalSpacer, horizontalSpacer, color, corne
   local rad = cornerRadius or 0
   self.dims = { x=-verticalSpacer, y=-horizontalSpacer, w=verticalSpacer, h=horizontalSpacer, r=rad }
   self.color = color
+  self.selectedMenuItem = nil
   self._active = false
   self._visible = false
   self._ready = false
@@ -82,6 +109,16 @@ function LnaMenuWindow:addMenuItems(items)
       self:addActor(items[i])
     end
     self._ready = false
+  end
+end
+
+function LnaMenuWindow:_selectMenuItem(item)
+  if self.selectedMenuItem ~= nil then
+    self.selectedMenuItem:_unselectMenuItem()
+  end
+  self.selectedMenuItem = item
+  if item ~= nil then
+    item:_selectMenuItem()
   end
 end
 
@@ -161,6 +198,7 @@ local LnaMenu = Class("LnaMenu", Lna.Director)
 function LnaMenu:initialize()
   Lna.Director.initialize(self)
   self._currentWindowIndex = -1
+  self:setActive(false)
 end
 
 function LnaMenu:addMenuWindow(window)
@@ -169,10 +207,15 @@ function LnaMenu:addMenuWindow(window)
   return self:addActor(window)
 end
 
+function LnaMenu:setActive(active)
+  Lna.Director.setActive(self, active)
+  self:_setWindowState(self._currentWindowIndex, active)
+end
+
 function LnaMenu:setCurrentWindow(windowIndex)
   self:_setWindowState(self._currentWindowIndex, false)
   self._currentWindowIndex = windowIndex
-  self:_setWindowState(self._currentWindowIndex, true)
+  self:_setWindowState(self._currentWindowIndex, self.active)
 end
 
 function LnaMenu:_setWindowState(idx, state)

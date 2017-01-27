@@ -68,27 +68,27 @@ local menuWnd2 = Lna.Menu.Window:new(10, 10, {r=20,g=20,b=20,a=255})
 menuWnd2:addMenuItem(menuBtnBack)
 
 
--- Put it all together
-
-local scene = Lna.Scene:new()
-scene:addActor(menuBtn1)
-scene:addActor(menuBtn2)
-scene:addActor(menuBtn3)
-scene:addActor(menuWnd)
-scene:addActor(menuBtnBack)
-scene:addActor(menuWnd2)
-scene:addActor(menu)
-local wnd1 = menu:addMenuWindow(menuWnd)
-local wnd2 = menu:addMenuWindow(menuWnd2)
-menu:setCurrentWindow(wnd1)
-menu:setActive(true)
 
 local stage = Lna.Stage:new()
-stage:setCurrentScene(stage:addScene(scene))
 
 
 -- Love2D calls
 function love.load()
+  if arg[#arg] == "-debug" then require("mobdebug").start() end
+  -- Put it all together
+  local scene = Lna.Scene:new()
+  scene:addActor(menuBtn1)
+  scene:addActor(menuBtn2)
+  scene:addActor(menuBtn3)
+  scene:addActor(menuWnd)
+  scene:addActor(menuBtnBack)
+  scene:addActor(menuWnd2)
+  scene:addActor(menu)
+  local wnd1 = menu:addMenuWindow(menuWnd)
+  menu:addMenuWindow(menuWnd2)
+  menu:setCurrentWindow(wnd1)
+  menu:setActive(true)
+  stage:setCurrentScene(stage:addScene(scene))
   stage:load()
   love.graphics.setBackgroundColor(200, 100, 100, 255)
 end
@@ -97,7 +97,7 @@ function love.update(dt)
   stage:update(dt)
 end
 
-function love.keyreleased(key, scancode)
+function love.keyreleased(key)
   stage:signalCue(key)
 end
 

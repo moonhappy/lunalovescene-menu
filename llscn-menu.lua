@@ -9,7 +9,6 @@ local Lna = require "lib.lunalovescene.llscn"
 local LnaMenuButton = Class("LnaMenuButton", Lna.Actor)
 function LnaMenuButton:initialize(label, size, color, selectedColor, cornerRadius)
   Lna.Actor.initialize(self, 5001)
-  self.menuIdentifier = menuIdentifier
   local rad = cornerRadius or 0
   self.dims = {x=-size.w, y=-size.h, w=size.w, h=size.h, r=rad}
   self.color = color
@@ -23,7 +22,7 @@ function LnaMenuButton:initialize(label, size, color, selectedColor, cornerRadiu
   self:onMouseCue(self.dims, "_mouseClick")
 end
 
-function LnaMenuButton:_mouseOver(dt, mx, my)
+function LnaMenuButton:_mouseOver()
   if self.director ~= nil and self._active then
     self.director:_selectMenuItemObj(self)
     return true
@@ -32,7 +31,7 @@ function LnaMenuButton:_mouseOver(dt, mx, my)
   end
 end
 
-function LnaMenuButton:_mouseClick(button, x, y, touch)
+function LnaMenuButton:_mouseClick()
   if self.director ~= nil and self._active and self.isSelected then
     for _,v in pairs(self.cues) do
       if v.cue == "hit" then
@@ -53,9 +52,9 @@ function LnaMenuButton:_unselectMenuItem()
   self.isSelected = false
 end
 
-function LnaMenuButton:update(dt)
+function LnaMenuButton:update()
   if self.label.x == -1 then
-    local lw, lh, lx
+    local lw, lh
     local f = self.label.font
     local tw = f:getWidth(self.label.text)
     local th = f:getHeight(self.label.text)
@@ -169,7 +168,7 @@ function LnaMenuWindow:setVisible(visible)
 end
 
 function LnaMenuWindow:configDimensions()
-  local width, height, flags = love.window.getMode()
+  local width,height,_ = love.window.getMode()
   local wndWidth = 0
   local wndHeight = self._spacers.h
   -- Determine window coordinates, first pass
@@ -202,7 +201,7 @@ function LnaMenuWindow:configDimensions()
   self._ready = true
 end
 
-function LnaMenuWindow:update(dt)
+function LnaMenuWindow:update()
   if not self._ready then
     self:configDimensions()
   end

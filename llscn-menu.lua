@@ -87,7 +87,7 @@ function LnaMenuButton:draw()
   local label = self.label
   if label.x ~= -1 then
     local lc = label.ucolor
-    love.graphics.setColor(lc.r, lc.g, lc.b, lc.b)
+    love.graphics.setColor(lc.r, lc.g, lc.b, lc.a)
     love.graphics.printf(label.text, label.x, label.y, label.w, "center")
   end
 end

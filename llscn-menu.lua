@@ -1,4 +1,4 @@
-local Class = require "lib.lunalovescene.lib.middleclass.middleclass"
+local Class = require "lib.middleclass.middleclass"
 local Lna = require "lib.lunalovescene.llscn"
 
 --[[--
